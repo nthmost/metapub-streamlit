@@ -28,7 +28,6 @@ for i in range(100):
   latest_iteration.text(f'Article {i+1}')
   bar.progress(i + 1)
 
-
 @st.cache(show_spinner=False)
 def search_pubmed(*args, **kwargs):
     return fetch.pmids_for_query(*args, **kwargs)
@@ -81,9 +80,14 @@ for i in range(1, len(pmids)):
     #res['url'].append(art.url)
 
 if res:
+    latest_iteration = st.empty()
+    del(bar)
     # start already sorted on relevance
     df = pd.DataFrame(res)
-    st.dataframe(df)
+    #st.dataframe(df)
+    st.dataframe(df.style.highlight_max())
+    #st.table(res, sort="relevance")
 
-
+    ## show a chart 
+    #st.bar_chart(df)
 
