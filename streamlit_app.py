@@ -10,13 +10,18 @@ import streamlit as st
 import pandas as pd
 import requests
 
-st.title("Metapub Toolkit")
 
-st.header("Pubmed Advanced Search")
+search_options = open("pubmed_search_options.txt").readlines()
+st.sidebar.header("Pubmed Advanced Query Tags")
+for opt in search_options:
+    st.sidebar.markdown(opt)
+
+
+st.title("Metapub Research Assistant")
 
 fetch = PubMedFetcher()
 
-search = st.text_input("Pubmed Search")
+search = st.text_input("Pubmed Advanced Query Engine")
 retmax = st.number_input("Maximum search hits", value=15)
 
 # Placeholder for search progress bar
