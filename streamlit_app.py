@@ -15,7 +15,7 @@ st.header("Pubmed Advanced Search")
 fetch = PubMedFetcher()
 
 search = st.text_input("Pubmed Search", value="central governor")
-
+retmax = st.number_input("Maximum search hits", value=15)
 
 @st.cache
 def search_pubmed(*args, **kwargs):
@@ -29,7 +29,7 @@ def get_article(pmid):
 pmids = []
 if search: 
     st.write("Hang on a sec while we fetch those articles...")
-    pmids = search_pubmed(search, retmax=15)
+    pmids = search_pubmed(search, retmax=retmax)
 
 st.subheader("Search Results")
 
