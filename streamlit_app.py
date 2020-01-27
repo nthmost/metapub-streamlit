@@ -16,46 +16,61 @@ st.header("Pubmed Advanced Search")
 
 fetch = PubMedFetcher()
 
-search = st.text_input("Pubmed Search", value="central governor")
+search = st.text_input("Pubmed Search")
 retmax = st.number_input("Maximum search hits", value=15)
 
-@st.cache
+# Placeholder for search progress bar
+latest_iteration = st.empty()
+bar = st.progress(0)
+
+for i in range(100):
+  # Update the progress bar with each iteration.
+  latest_iteration.text(f'Article {i+1}')
+  bar.progress(i + 1)
+
+
+@st.cache(show_spinner=False)
 def search_pubmed(*args, **kwargs):
     return fetch.pmids_for_query(*args, **kwargs)
 
-@st.cache(hash_funcs={PubMedArticle: id})
+@st.cache(show_spinner=False, hash_funcs={PubMedArticle: id})
 def get_article(pmid):
     return fetch.article_by_pmid(pmid)
 
-@st.cache
+@st.cache(show_spinner=False)
 def get_citedby(pmid):
     req = requests.get("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=pubmed&linkname=pubmed_pubmed_citedin&id={}&id={}".format(pmid, pmid))
     out = []
     if req is not None:
-        stuff = lxml.etree.fromstring(req.content)
-        for event, elem in lxml.etree.iterwalk(stuff, events=('end',), tag='Id'): 
-            out.append(elem.text)
+        try:
+            stuff = lxml.etree.fromstring(req.content)
+            for event, elem in lxml.etree.iterwalk(stuff, events=('end',), tag='Id'): 
+                out.append(elem.text)
+        except Exception as err:
+            st.write(err)
     return out
-
-
 
 pmids = []
 if search: 
-    st.write("Hang on a sec while we fetch those articles...")
+    latest_iteration.text("Performing NCBI search...")
     pmids = search_pubmed(search, retmax=retmax)
+    bar.progress(1)
 
 st.subheader("Search Results")
 
-# use Levenshtein distance to determine each article's relevance
-#   to the search phrase.
 
 #res = {'relevance': [], 'pmid': [], 'title': [], 'url': [], 'year': [], 'cost': []}
 res = {'relevance': [], 'pmid': [], 'title': [], 'cit_count': [], 'year': []}
 
 
-for pmid in pmids:
+# use Levenshtein distance to determine each article's relevance
+#   to the search phrase. This could be replaced by something smarter.
+for i in range(1, len(pmids)):
+    pmid = pmids[i]
     art = get_article(pmid)
     cits = get_citedby(pmid) 
+    latest_iteration.text(f"Getting article {pmid}")
+    bar.progress(i)
 
     res['relevance'].append(Levenshtein.distance(search, art.title))
     res['pmid'].append(pmid)
